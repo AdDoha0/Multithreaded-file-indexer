@@ -1,3 +1,4 @@
+use std::path::Path;
 use std::{path::PathBuf, time::SystemTime};
 use std::fs::{read_dir, DirEntry};
 
@@ -45,12 +46,26 @@ pub fn entry_processing(entry: &DirEntry) -> std::io::Result<FileInfo> {
 }
 
 
-pub fn list_directory(path: &str) -> std::io::Result<()> {
-    for entry in read_dir(path)? {
-        let entry = entry?;
-        let file_info = entry_processing(&entry)?; 
-        dbg!(&file_info);
+pub fn list_directory_recursion<P: AsRef<Path>>(path: P) -> std::io::Result<(u64, Vec<FileInfo>)> {
+    let mut total_size = 0;
+    let mut collected_info:Vec<FileInfo>  = Vec::new();
+
+    for entry_result in read_dir(path)? {
+        let entry = entry_result?;
+        let metadata = entry.metadata()?; 
+
+        if metadata.is_file() {
+            total_size += metadata.len()
+        } else if metadata.is_dir() {
+            let (dir_size, mut dir_info) = list_directory_recursion(entry.path())?;
+            total_size += dir_size;
+            collected_info.append(&mut dir_info);
+        }
+        let file_info = entry_processing(&entry)?;
+        collected_info.push(file_info);
     }
 
-    Ok(())
-}
+    Ok((total_size, collected_info))
+
+    
+}  
