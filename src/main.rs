@@ -1,23 +1,48 @@
-use crate::indexer::{list_directory_recursion};
+mod walker;
+mod worker;
+mod stats;
 
-mod indexer;
+use core::num;
+use std::sync::mpsc::channel;
+use std::thread;
+use std::path::PathBuf;
+
+use crate::walker::walk_dir;
+use crate::worker::start_worker;
+
+// use crate::walker::walk_dir;
+// use crate::stats::FileStats;
+
+
+// fn main() {
+//     let (file_tx, file_rx) = channel();
+//     let  (stats_tx, stats_rx) = channel(); 
+
+
+//     let root_patch = std::env::args()
+//         .nth(1)
+//         .expect("Укажите путь к директории"); 
+//     let root_path = PathBuf::from(root_patch);
+
+
+//     let walker_tx = file_tx.clone();
+//     let walker = thread::spawn(move || {
+//         walk_dir(root_patch, walker_tx);
+//     });
+
+
+//     let num_workers = 4;
+//     for _ in 0..num_workers {
+//         let rx = file_rx.clone();
+//         let tx = stats_tx.clone();
+//         thread::spawn(move || {
+//             start_worker(rx, tx)
+//         })
+//     } 
+
+
+    
 
 
 
-fn main() {
-    let path = "/home/user/my_projects/";
-
-    let (total_size, files) = match list_directory_recursion(path) {
-        Ok(t) => (t.0, t.1),
-        Err(err) => {
-            eprintln!("{:?}", err);
-            return;
-        },
-    };
-
-    println!("Total size: {} bytes", total_size);
-    println!("Files found: {}", files.len());
-    for file in files {
-        dbg!(&file);
-    }
-}
+// }
