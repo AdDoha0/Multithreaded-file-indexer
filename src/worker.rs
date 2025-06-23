@@ -1,41 +1,33 @@
+use std::path::PathBuf;
+use std::fs::File;
+use std::io::{BufReader, BufRead};
+use std::sync::mpsc::Sender;
 
+use crate::stats::FileStats;
 
-use std::os::linux::raw::stat;
-use std::path::PathBuf;                 // Работа с путями
-use std::sync::mpsc::{Receiver, Sender}; // Каналы для получения и отправки
-use std::fs::File;                      // Для открытия файлов
-use std::io::{BufReader, BufRead};      // Буферизированное чтение строк
+// Новая функция: обрабатывает один файл
+pub fn process_file(path: PathBuf, stats_tx: &Sender<FileStats>) {
+    if let Ok(file) = File::open(&path) {
+        let reader = BufReader::new(file);
+        let mut lines = 0;
+        let mut words = 0;
+        let mut bytes = 0;
 
-use crate::stats::FileStats;    
+        for line in reader.lines() {
+            if let Ok(line) = line {
+                lines += 1;
+                words += line.split_whitespace().count();
+                bytes += line.len();
+            }
+        }
 
-
-
-
-pub fn start_worker(rx: Receiver<PathBuf>, stats_tx: Sender<FileStats>) {
-    for path in rx.iter() {
-        if let Ok(file) = File::open(&path) {
-            let reader = BufReader::new(file);
-            let mut lines = 0;
-            let mut words = 0;
-            let mut bytes = 0;
-
-            for line in reader.lines() {
-                if let Ok(line) = line {
-                    lines += 1; 
-                    words += line.split_ascii_whitespace().count();
-                    bytes += line.len();
-                }
-            } 
-
-            let stats = FileStats {
-                path,
-                lines, 
-                words, 
-                bytes
-            };
-            
-            let _ = stats_tx.send(stats);
+        let stats = FileStats {
+            path,
+            lines,
+            words,
+            bytes,
         };
-    }
 
+        let _ = stats_tx.send(stats); // Отправляем результат
+    }
 }
