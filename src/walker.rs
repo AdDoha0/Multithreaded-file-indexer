@@ -1,7 +1,7 @@
 
 
 use std::fs::read_dir;          
-use std::path::PathBuf;          
+use std::path::{self, PathBuf};          
 use std::sync::mpsc::Sender;
 
 pub fn walk_dir(path: PathBuf, tx: Sender<PathBuf>) {
@@ -16,3 +16,5 @@ pub fn walk_dir(path: PathBuf, tx: Sender<PathBuf>) {
         };
     };
 }
+
+

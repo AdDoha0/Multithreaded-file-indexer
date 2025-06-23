@@ -7,8 +7,8 @@ use std::sync::mpsc::channel;
 use std::thread;
 use std::path::PathBuf;
 
-use crate::walker::walk_dir;
-use crate::worker::start_worker;
+// use crate::walker::walk_dir;
+// use crate::worker::start_worker;
 
 // use crate::walker::walk_dir;
 // use crate::stats::FileStats;
