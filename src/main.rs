@@ -7,42 +7,51 @@ use std::sync::mpsc::channel;
 use std::thread;
 use std::path::PathBuf;
 
-// use crate::walker::walk_dir;
-// use crate::worker::start_worker;
-
-// use crate::walker::walk_dir;
-// use crate::stats::FileStats;
+use crate::walker::walk_dir;
+use crate::worker::start_worker;
 
 
-// fn main() {
-//     let (file_tx, file_rx) = channel();
-//     let  (stats_tx, stats_rx) = channel(); 
+fn main() {
+    let (file_tx, file_rx) = channel(); 
+    let (stats_tx,  stats_rx) = channel(); 
+
+    let root_path  = std::env::args()
+        .nth(1)
+        .expect("Укажите путь к директории");
+    let root_path = PathBuf::from(root_path);
 
 
-//     let root_patch = std::env::args()
-//         .nth(1)
-//         .expect("Укажите путь к директории"); 
-//     let root_path = PathBuf::from(root_patch);
+    let walker_tx = file_tx.clone(); 
+    let walker = thread::spawn(move || {
+        walk_dir(root_path, walker_tx);
+    });  
 
 
-//     let walker_tx = file_tx.clone();
-//     let walker = thread::spawn(move || {
-//         walk_dir(root_patch, walker_tx);
-//     });
+    let num_workers = 4;
+    for _ in 0..num_workers {
+        let rx = file_rx.clone();
+        let tx = stats_tx.clone();
+        thread::spawn(move || start_worker(rx, tx));
+    };
+
+    drop(file_tx);
+    drop(stats_tx);
 
 
-//     let num_workers = 4;
-//     for _ in 0..num_workers {
-//         let rx = file_rx.clone();
-//         let tx = stats_tx.clone();
-//         thread::spawn(move || {
-//             start_worker(rx, tx)
-//         })
-//     } 
+    let mut total_lines = 0;
+    let mut total_words = 0;
+    let mut total_bytes = 0;
 
+    for stat in stats_rx.iter() {
+        println!("{:?}", stat); 
+        total_lines += stat.lines;
+        total_words += stat.words;
+        total_bytes += stat.bytes;
+    }
 
-    
+    println!(
+        "Итого: {} строк, {} слов, {} байт",
+        total_lines, total_words, total_bytes
+    );
 
-
-
-// }
+}
